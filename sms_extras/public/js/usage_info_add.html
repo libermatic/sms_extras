@@ -1,23 +1,26 @@
-<div class="usage-info-section" style="margin: 30px;">
-  <h4>{{ __("SMS") }}</h4>
+<div class="sms_extra-sms-section">
+  <div class="usage-info-section">
+    <h4>{{ __("SMS") }}</h4>
 
-  {% var balance_percent = sms_sent / (sms_sent + sms_balance) * 100; %}
+    {% var balance_percent = sms_sent / (sms_sent + sms_balance) * 100; %}
+    {% var balance_color = balance_percent < 75 ? "success" : "warning"; %}
 
-  <div class="progress" style="margin-bottom: 30px;">
-    <div
-      class="progress-bar progress-bar-{%= (balance_percent < 75 ? "success" : "warning") %}"
+    <div class="progress">
+      <div
+      class="progress-bar progress-bar-{%= balance_color %}"
       style="width: {{ balance_percent }}%"
-    />
-  </div>
+      />
+    </div>
 
-  <div class="sms_extras-usage">
-    <dl>
-      <dt>Sent this month</dt>
-      <dd>{%= sms_sent %}</dd>
-    </dl>
-    <dl>
-      <dt>Credits remaining</dt>
-      <dd>{%= sms_balance %}</dd>
-    </dl>
+    <div class="sms_extras-usage">
+      <dl>
+        <dt>Sent this month</dt>
+        <dd>{%= sms_sent %}</dd>
+      </dl>
+      <dl>
+        <dt>Credits remaining</dt>
+        <dd>{%= sms_balance %}</dd>
+      </dl>
+    </div>
   </div>
 </div>
