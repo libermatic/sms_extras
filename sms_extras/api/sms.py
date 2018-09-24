@@ -62,4 +62,4 @@ def get_usage():
             sms_balance = response.json().get(settings.response_field)
         else:
             sms_balance = response.text
-    return {'sms_sent': query[0][0], 'sms_balance': sms_balance}
+    return {'sms_sent': query[0][0] or 0, 'sms_balance': sms_balance}

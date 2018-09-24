@@ -1,4 +1,8 @@
 frappe.pages['usage-info'].on_page_show = async function(wrapper) {
+  $(wrapper)
+    .find('.sms_extras-usage')
+    .parent()
+    .remove();
   const { message: sms_usage } = await frappe.call({
     method: 'sms_extras.api.sms.get_usage',
   });
