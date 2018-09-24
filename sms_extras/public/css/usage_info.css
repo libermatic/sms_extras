@@ -1,0 +1,21 @@
+.sms_extras-usage {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
+.sms_extras-usage dl {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+}
+.sms_extras-usage dt {
+  order: 2;
+  font-weight: normal;
+  text-transform: uppercase;
+  font-size: 0.9em;
+}
+.sms_extras-usage dd {
+  order: 1;
+  font-size: 1.4em;
+  font-weight: bold;
+}

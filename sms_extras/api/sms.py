@@ -4,8 +4,10 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe.utils import today, get_first_day, get_last_day
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
-from toolz import merge
+import requests
+from toolz import merge, compose
 
 
 def get_sms_text(template_name, doc):
@@ -39,3 +41,25 @@ def request_sms(number, content, communication=None):
             ).insert()
     except Exception:
         frappe.log_error(frappe.get_traceback())
+
+
+@frappe.whitelist()
+def get_usage():
+    query = frappe.db.sql(
+        """
+            SELECT SUM(no_of_sent_sms) FROM `tabSMS Log`
+            WHERE sent_on BETWEEN '{first_day}' AND '{last_day}'
+        """.format(
+            first_day=compose(get_first_day, today)(),
+            last_day=compose(get_last_day, today)(),
+        )
+    )
+    sms_balance = 'N/A'
+    settings = frappe.get_single('SMS Extras Settings')
+    if settings.sms_balance_url:
+        response = requests.get(settings.sms_balance_url)
+        if settings.response_content_type == 'JSON':
+            sms_balance = response.json().get(settings.response_field)
+        else:
+            sms_balance = response.text
+    return {'sms_sent': query[0][0], 'sms_balance': sms_balance}
