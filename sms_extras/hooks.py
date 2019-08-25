@@ -81,12 +81,15 @@ page_js = {"usage-info": "public/js/usage_info.js"}
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-#     "*": {
-#         "on_update": "method",
-#         "on_cancel": "method",
-#         "on_trash": "method" #    }
-# }
+doc_events = {
+    "*": {
+        "after_insert": "sms_extras.api.sms.process",
+        "on_update": "sms_extras.api.sms.process",
+        "on_submit": "sms_extras.api.sms.process",
+        "on_update_after_submit": "sms_extras.api.sms.process",
+        "on_cancel": "sms_extras.api.sms.process",
+    }
+}
 
 # Scheduled Tasks
 # ---------------
