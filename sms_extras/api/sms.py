@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.utils import today, get_first_day, get_last_day, cint
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
+import json
 import requests
 from toolz import merge, compose, get
 
@@ -131,10 +132,17 @@ def get_usage():
     )
     sms_balance = 0
     settings = frappe.get_single("SMS Extras Settings")
-    if settings.sms_balance_url:
-        response = requests.get(settings.sms_balance_url)
-        if settings.response_content_type == "JSON":
-            sms_balance = response.json().get(settings.response_field)
-        else:
-            sms_balance = cint(response.text)
+    if settings.show_balance and settings.sms_balance_url:
+        response = (
+            requests.post(
+                settings.sms_balance_url, data=json.loads(settings.sms_balance_payload)
+            )
+            if settings.sms_balance_method == "POST"
+            else requests.get(settings.sms_balance_url)
+        )
+        sms_balance = (
+            response.json().get(settings.response_field)
+            if settings.response_content_type == "JSON"
+            else cint(response.text)
+        )
     return {"sms_sent": query[0][0] or 0, "sms_balance": sms_balance}
