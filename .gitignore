@@ -5,3 +5,8 @@
 tags
 sms_extras/docs/current
 .ropeproject
+
+# Bench runtime
+node_modules/
+sms_extras/public/node_modules
+yarn.lock
