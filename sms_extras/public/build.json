@@ -1,4 +1,5 @@
 {
   "css/sms_extras.css": ["public/less/usage_info.less"],
-  "js/sms_extras.min.js": ["public/js/usage_info_add.html"]
+  "js/sms_extras_templates.min.js": ["public/js/usage_info_add.html"],
+  "js/sms_extras.min.js": ["public/js/index.js"]
 }
