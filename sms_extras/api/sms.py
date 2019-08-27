@@ -195,3 +195,11 @@ def send_sms_multiple(recipients, message):
         create_sms_log(
             {"message": message, "receiver_list": recipients}, sent_to=recipients
         )
+
+
+@frappe.whitelist()
+def get_numbers_from_list(recipient_list):
+    doc = frappe.get_doc("SMS Recipient List", recipient_list)
+    if not doc:
+        return None
+    return map(lambda x: x.recipient_number, doc.recipients)
