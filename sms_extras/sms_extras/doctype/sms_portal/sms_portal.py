@@ -3,14 +3,16 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+from frappe.utils import cint
 from frappe.model.document import Document
-from frappe.core.doctype.sms_settings.sms_settings import validate_receiver_nos
+from frappe.utils.background_jobs import enqueue
+from frappe.core.doctype.sms_settings.sms_settings import (
+    send_sms,
+    validate_receiver_nos,
+)
 from toolz import compose
 
-from sms_extras.api.sms import send_sms
-
-
-_get_recipients = compose(validate_receiver_nos, lambda x: x.replace(",", "\n").split())
+from sms_extras.api.sms import send_multiple_sms
 
 
 class SMSPortal(Document):
@@ -18,6 +20,22 @@ class SMSPortal(Document):
         pass
 
     def request_sms(self):
-        recipients = _get_recipients(self.recipients)
         self.validate_balance()
-        send_sms(recipients, self.message, in_batch=self.batch_send)
+        get_recipients = compose(
+            validate_receiver_nos, lambda x: x.replace(",", "\n").split()
+        )
+        enqueue(
+            method=_enqueue_sms,
+            queue="short",
+            event="send_multiple_sms" if cint(self.batch_send) else send_sms,
+            recipients=get_recipients(self.recipients or ""),
+            message=self.message,
+            in_batch=cint(self.batch_send),
+        )
+
+
+def _enqueue_sms(recipients=[], message="", in_batch=False):
+    if not in_batch:
+        send_sms(recipients, message)
+    else:
+        send_multiple_sms(recipients, message)

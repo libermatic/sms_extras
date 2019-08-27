@@ -7,7 +7,6 @@ import frappe
 from frappe import _
 from frappe.utils import today, get_first_day, get_last_day, cint
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
-from frappe.utils.background_jobs import enqueue
 import json
 import requests
 from functools import partial, reduce
@@ -152,17 +151,7 @@ def get_usage():
     return {"sms_sent": query[0][0] or 0, "sms_balance": sms_balance}
 
 
-def send_sms_in_batch(recipients, message, in_batch=False):
-    enqueue(
-        method=send_sms_in_batch if in_batch else send_sms,
-        queue="short",
-        event="send_sms_in_batch" if in_batch else send_sms,
-        recipients=recipients,
-        message=message,
-    )
-
-
-def send_sms_multiple(recipients, message):
+def send_multiple_sms(recipients, message):
     from frappe.core.doctype.sms_settings.sms_settings import (
         get_headers,
         send_request,
@@ -177,7 +166,9 @@ def send_sms_multiple(recipients, message):
         frappe.throw(_("Invalid number"))
 
     get_param_payload = compose(
-        lambda params: reduce(lambda a, x: merge(a, {x.parameter: x.value}), params),
+        lambda params: reduce(
+            lambda a, x: merge(a, {x.parameter: x.value}), params, {}
+        ),
         partial(filter, lambda x: not x.header),
     )
 
