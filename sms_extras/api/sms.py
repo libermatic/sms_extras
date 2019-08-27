@@ -4,11 +4,15 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe import _
 from frappe.utils import today, get_first_day, get_last_day, cint
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
+from frappe.utils.background_jobs import enqueue
 import json
 import requests
+from functools import partial, reduce
 from toolz import merge, compose, get
+from six import string_types
 
 
 def process(doc, method):
@@ -146,3 +150,48 @@ def get_usage():
             else cint(response.text)
         )
     return {"sms_sent": query[0][0] or 0, "sms_balance": sms_balance}
+
+
+def send_sms_in_batch(recipients, message, in_batch=False):
+    enqueue(
+        method=send_sms_in_batch if in_batch else send_sms,
+        queue="short",
+        event="send_sms_in_batch" if in_batch else send_sms,
+        recipients=recipients,
+        message=message,
+    )
+
+
+def send_sms_multiple(recipients, message):
+    from frappe.core.doctype.sms_settings.sms_settings import (
+        get_headers,
+        send_request,
+        create_sms_log,
+    )
+
+    def make_receiver_param(receivers):
+        if isinstance(receivers, string_types):
+            return receivers
+        if isinstance(receivers, list):
+            return ",".join(receivers)
+        frappe.throw(_("Invalid number"))
+
+    get_param_payload = compose(
+        lambda params: reduce(lambda a, x: merge(a, {x.parameter: x.value}), params),
+        partial(filter, lambda x: not x.header),
+    )
+
+    ss = frappe.get_single("SMS Settings")
+    headers = get_headers(ss)
+    payload = merge(
+        {
+            ss.message_parameter: frappe.safe_decode(message).encode("utf-8"),
+            ss.receiver_parameter: make_receiver_param(recipients),
+        },
+        get_param_payload(ss.parameters),
+    )
+    status = send_request(ss.sms_gateway_url, payload, headers, ss.use_post)
+    if 200 <= status < 300:
+        create_sms_log(
+            {"message": message, "receiver_list": recipients}, sent_to=recipients
+        )
