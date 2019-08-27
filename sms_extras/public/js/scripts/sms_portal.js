@@ -7,6 +7,11 @@ async function request_sms(frm) {
 }
 
 export default {
+  onload: function(frm) {
+    frm.set_query('template', () => ({
+      filters: { type: 'Promotional', disabled: 0 },
+    }));
+  },
   refresh: function(frm) {
     frm.disable_save();
     frm.page.clear_icons();
