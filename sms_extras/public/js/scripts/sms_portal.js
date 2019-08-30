@@ -1,9 +1,30 @@
+import Vue from 'vue/dist/vue.js';
+
+import SMSPortalDashboard from '../components/SMSPortalDashboard.vue';
+
 async function request_sms(frm) {
   try {
     await frappe.call({ method: 'request_sms', doc: frm.doc });
   } finally {
     frm.refresh();
   }
+}
+
+function render_dashboard(frm) {
+  frm.dashboard.show();
+  const $wrapper = $('<div class="form-dashboard-section custom" />').appendTo(
+    frm.dashboard.wrapper
+  );
+  const { recipients, message } = frm.doc;
+  return new Vue({
+    data: { recipients, message },
+    el: $wrapper.html('<div />').children()[0],
+    render: function(h) {
+      return h(SMSPortalDashboard, {
+        props: { recipients: this.recipients, message: this.message },
+      });
+    },
+  });
 }
 
 export default {
@@ -16,6 +37,7 @@ export default {
     frm.disable_save();
     frm.page.clear_icons();
     frm.page.set_primary_action(__('Send SMS'), () => request_sms(frm));
+    frm.vue_sms_portal_dashboard = render_dashboard(frm);
   },
   recipient_list: async function(frm) {
     const { recipient_list } = frm.doc;
@@ -28,5 +50,11 @@ export default {
     } else {
       frm.set_value('recipients', null);
     }
+  },
+  recipients: function(frm) {
+    frm.vue_sms_portal_dashboard.recipients = frm.doc.recipients;
+  },
+  message: function(frm) {
+    frm.vue_sms_portal_dashboard.message = frm.doc.message;
   },
 };
