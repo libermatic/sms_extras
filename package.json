@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/libermatic/sms_extras/issues"
   },
-  "homepage": "https://github.com/libermatic/sms_extras#readme"
+  "homepage": "https://github.com/libermatic/sms_extras#readme",
+  "dependencies": {
+    "lodash": "^4.17.15"
+  }
 }
