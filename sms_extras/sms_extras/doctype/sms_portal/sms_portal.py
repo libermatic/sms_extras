@@ -10,7 +10,7 @@ from frappe.core.doctype.sms_settings.sms_settings import (
     send_sms,
     validate_receiver_nos,
 )
-from toolz import compose
+from toolz import compose, unique
 
 from sms_extras.api.sms import send_multiple_sms
 
@@ -22,7 +22,7 @@ class SMSPortal(Document):
     def request_sms(self):
         self.validate_balance()
         get_recipients = compose(
-            validate_receiver_nos, lambda x: x.replace(",", "\n").split()
+            unique, validate_receiver_nos, lambda x: x.replace(",", "\n").split()
         )
         enqueue(
             method=_enqueue_sms,
