@@ -30,7 +30,7 @@ function render_dashboard(frm) {
 export default {
   onload: function(frm) {
     frm.set_query('template', () => ({
-      filters: { type: 'Promotional', disabled: 0 },
+      filters: { type: 'Manual', disabled: 0 },
     }));
   },
   refresh: function(frm) {
