@@ -22,7 +22,7 @@ class SMSPortal(Document):
     def request_sms(self):
         self.validate_balance()
         get_recipients = compose(
-            unique, validate_receiver_nos, lambda x: x.replace(",", "\n").split()
+            list, unique, validate_receiver_nos, lambda x: x.replace(",", "\n").split()
         )
         enqueue(
             method=_enqueue_sms,
