@@ -34,8 +34,7 @@ def process(doc, method):
         number = _get_number(template.num_field, doc)
         text = _get_content(template.content, doc)
 
-        # fix for json.loads casting to int during number validation
-        send_sms('"{}"'.format(number), text)
+        send_sms(number, text)
 
         if template.save_com:
             _make_communication(
@@ -155,7 +154,11 @@ def get_usage():
 
 
 _get_receiver_list = compose(
-    list, unique, validate_receiver_nos, lambda x: x.replace(",", "\n").split()
+    list,
+    unique,
+    validate_receiver_nos,
+    lambda x: x.replace(",", "\n").split(),
+    frappe.utils.cstr,
 )
 
 
@@ -185,6 +188,36 @@ def _make_params(ss, sx):
         get_param_payload(ss.parameters),
         _eval_dynamic_params(get_param_payload(sx.parameters)),
     )
+
+
+def send_sms(recipients, message):
+    ss = frappe.get_single("SMS Settings")
+    sx = frappe.get_single("SMS Extras Settings")
+    headers = _make_headers(ss, sx)
+    params = _make_params(ss, sx)
+
+    receiver_list = _get_receiver_list(recipients)
+    success_list = []
+    for receiver in receiver_list:
+        payload = merge(
+            {
+                ss.message_parameter: frappe.safe_decode(message).encode("utf-8"),
+                ss.receiver_parameter: receiver,
+            },
+            params,
+        )
+        status = send_request(ss.sms_gateway_url, payload, headers, ss.use_post)
+        if 200 <= status < 300:
+            success_list.append(receiver)
+
+    if success_list:
+        create_sms_log(
+            {
+                "message": frappe.safe_decode(message).encode("utf-8"),
+                "receiver_list": receiver_list,
+            },
+            sent_to=success_list,
+        )
 
 
 def send_multiple_sms(recipients, message):

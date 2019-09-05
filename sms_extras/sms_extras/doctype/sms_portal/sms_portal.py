@@ -6,13 +6,8 @@ from __future__ import unicode_literals
 from frappe.utils import cint
 from frappe.model.document import Document
 from frappe.utils.background_jobs import enqueue
-from frappe.core.doctype.sms_settings.sms_settings import (
-    send_sms,
-    validate_receiver_nos,
-)
-from toolz import compose, unique
 
-from sms_extras.api.sms import send_multiple_sms
+from sms_extras.api.sms import send_multiple_sms, send_sms
 
 
 class SMSPortal(Document):
