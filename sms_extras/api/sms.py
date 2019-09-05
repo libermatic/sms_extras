@@ -4,14 +4,17 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe import _
 from frappe.utils import today, get_first_day, get_last_day, cint
-from frappe.core.doctype.sms_settings.sms_settings import send_sms
+from frappe.core.doctype.sms_settings.sms_settings import (
+    validate_receiver_nos,
+    get_headers,
+    send_request,
+    create_sms_log,
+)
 import json
 import requests
 from functools import partial, reduce
-from toolz import merge, compose, get, valmap, dissoc
-from six import string_types
+from toolz import merge, compose, get, valmap, dissoc, unique
 
 
 def process(doc, method):
@@ -151,57 +154,60 @@ def get_usage():
     return {"sms_sent": query[0][0] or 0, "sms_balance": sms_balance}
 
 
-def send_multiple_sms(recipients, message):
-    from frappe.core.doctype.sms_settings.sms_settings import (
-        get_headers,
-        send_request,
-        create_sms_log,
+_get_receiver_list = compose(
+    list, unique, validate_receiver_nos, lambda x: x.replace(",", "\n").split()
+)
+
+
+_eval_dynamic_params = partial(
+    valmap,
+    lambda x: frappe.safe_eval(
+        x, eval_globals=frappe._dict(frappe=frappe._dict(utils=frappe.utils))
+    ),
+)
+
+
+def _make_headers(ss, sx):
+    get_dynamic_headers = compose(
+        _eval_dynamic_params, lambda x: dissoc(x, "Accept"), get_headers
     )
+    return merge(get_headers(ss), get_dynamic_headers(sx))
 
-    def make_receiver_param(receivers):
-        if isinstance(receivers, string_types):
-            return receivers
-        if isinstance(receivers, list):
-            return ",".join(receivers)
-        frappe.throw(_("Invalid number"))
 
+def _make_params(ss, sx):
     get_param_payload = compose(
         lambda params: reduce(
             lambda a, x: merge(a, {x.parameter: x.value}), params, {}
         ),
         partial(filter, lambda x: not x.header),
     )
-
-    eval_dynamic_params = partial(
-        valmap,
-        lambda x: frappe.safe_eval(
-            x, eval_globals=frappe._dict(frappe=frappe._dict(utils=frappe.utils))
-        ),
+    return merge(
+        get_param_payload(ss.parameters),
+        _eval_dynamic_params(get_param_payload(sx.parameters)),
     )
 
-    get_dynamic_headers = compose(
-        eval_dynamic_params, lambda x: dissoc(x, "Accept"), get_headers
-    )
 
+def send_multiple_sms(recipients, message):
     ss = frappe.get_single("SMS Settings")
     sx = frappe.get_single("SMS Extras Settings")
-    headers = merge(get_headers(ss), get_dynamic_headers(sx))
+    headers = _make_headers(ss, sx)
+
+    receiver_list = _get_receiver_list(recipients)
     payload = merge(
         {
             ss.message_parameter: frappe.safe_decode(message).encode("utf-8"),
-            ss.receiver_parameter: make_receiver_param(recipients),
+            ss.receiver_parameter: ",".join(receiver_list),
         },
-        get_param_payload(ss.parameters),
-        eval_dynamic_params(get_param_payload(sx.parameters)),
+        _make_params(ss, sx),
     )
     status = send_request(ss.sms_gateway_url, payload, headers, ss.use_post)
     if 200 <= status < 300:
         create_sms_log(
             {
                 "message": frappe.safe_decode(message).encode("utf-8"),
-                "receiver_list": recipients,
+                "receiver_list": receiver_list,
             },
-            sent_to=recipients,
+            sent_to=receiver_list,
         )
 
 

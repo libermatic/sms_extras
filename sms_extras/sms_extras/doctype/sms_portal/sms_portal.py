@@ -21,14 +21,11 @@ class SMSPortal(Document):
 
     def request_sms(self):
         self.validate_balance()
-        get_recipients = compose(
-            list, unique, validate_receiver_nos, lambda x: x.replace(",", "\n").split()
-        )
         enqueue(
             method=_enqueue_sms,
             queue="short",
             event="send_multiple_sms" if cint(self.batch_send) else send_sms,
-            recipients=get_recipients(self.recipients or ""),
+            recipients=self.recipients,
             message=self.message,
             in_batch=cint(self.batch_send),
         )
