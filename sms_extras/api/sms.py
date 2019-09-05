@@ -10,7 +10,7 @@ from frappe.core.doctype.sms_settings.sms_settings import send_sms
 import json
 import requests
 from functools import partial, reduce
-from toolz import merge, compose, get
+from toolz import merge, compose, get, valmap, dissoc
 from six import string_types
 
 
@@ -172,14 +172,27 @@ def send_multiple_sms(recipients, message):
         partial(filter, lambda x: not x.header),
     )
 
+    eval_dynamic_params = partial(
+        valmap,
+        lambda x: frappe.safe_eval(
+            x, eval_globals=frappe._dict(frappe=frappe._dict(utils=frappe.utils))
+        ),
+    )
+
+    get_dynamic_headers = compose(
+        eval_dynamic_params, lambda x: dissoc(x, "Accept"), get_headers
+    )
+
     ss = frappe.get_single("SMS Settings")
-    headers = get_headers(ss)
+    sx = frappe.get_single("SMS Extras Settings")
+    headers = merge(get_headers(ss), get_dynamic_headers(sx))
     payload = merge(
         {
             ss.message_parameter: frappe.safe_decode(message).encode("utf-8"),
             ss.receiver_parameter: make_receiver_param(recipients),
         },
         get_param_payload(ss.parameters),
+        eval_dynamic_params(get_param_payload(sx.parameters)),
     )
     status = send_request(ss.sms_gateway_url, payload, headers, ss.use_post)
     if 200 <= status < 300:
