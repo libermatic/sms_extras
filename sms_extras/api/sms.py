@@ -184,7 +184,10 @@ def send_multiple_sms(recipients, message):
     status = send_request(ss.sms_gateway_url, payload, headers, ss.use_post)
     if 200 <= status < 300:
         create_sms_log(
-            {"message": message.encode("utf-8"), "receiver_list": recipients},
+            {
+                "message": frappe.safe_decode(message).encode("utf-8"),
+                "receiver_list": recipients,
+            },
             sent_to=recipients,
         )
 
