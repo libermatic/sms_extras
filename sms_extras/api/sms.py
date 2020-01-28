@@ -249,4 +249,4 @@ def get_numbers_from_list(recipient_list):
     doc = frappe.get_doc("SMS Recipient List", recipient_list)
     if not doc:
         return None
-    return map(lambda x: x.recipient_number, doc.recipients)
+    return [x.recipient_number for x in doc.recipients if not x.disabled]
