@@ -52,6 +52,9 @@ export default {
       return this.message.length;
     },
     recipientLength: function() {
+      if (!this.recipients) {
+        return 0;
+      }
       return flatten(this.recipients.split('\n').map(x => x.split(',')))
         .map(trim)
         .filter(x => x).length;
