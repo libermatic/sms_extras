@@ -12,14 +12,14 @@ async function request_sms(frm) {
 
 function render_dashboard(frm) {
   frm.dashboard.show();
-  const $wrapper = $('<div class="form-dashboard-section custom" />').appendTo(
-    frm.dashboard.wrapper
-  );
+  const $wrapper = $('<div />');
+  frm.dashboard.add_section($wrapper);
+
   const { recipients, message } = frm.doc;
   return new Vue({
     data: { recipients, message },
-    el: $wrapper.html('<div />').children()[0],
-    render: function(h) {
+    el: $wrapper[0],
+    render: function (h) {
       return h(SMSPortalDashboard, {
         props: { recipients: this.recipients, message: this.message },
       });
@@ -28,18 +28,19 @@ function render_dashboard(frm) {
 }
 
 export default {
-  onload: function(frm) {
+  onload: function (frm) {
     frm.set_query('template', () => ({
       filters: { type: 'Manual', disabled: 0 },
     }));
   },
-  refresh: function(frm) {
+  refresh: function (frm) {
+    console.log('refresh');
     frm.disable_save();
     frm.page.clear_icons();
     frm.page.set_primary_action(__('Send SMS'), () => request_sms(frm));
     frm.vue_sms_portal_dashboard = render_dashboard(frm);
   },
-  recipient_list: async function(frm) {
+  recipient_list: async function (frm) {
     const { recipient_list } = frm.doc;
     if (recipient_list) {
       const { message: recipients } = await frappe.call({
@@ -51,10 +52,10 @@ export default {
       frm.set_value('recipients', null);
     }
   },
-  recipients: function(frm) {
+  recipients: function (frm) {
     frm.vue_sms_portal_dashboard.recipients = frm.doc.recipients;
   },
-  message: function(frm) {
+  message: function (frm) {
     frm.vue_sms_portal_dashboard.message = frm.doc.message;
   },
 };

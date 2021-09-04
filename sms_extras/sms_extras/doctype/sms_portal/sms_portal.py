@@ -3,6 +3,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+import frappe
 from frappe.utils import cint
 from frappe.model.document import Document
 from frappe.utils.background_jobs import enqueue
@@ -14,6 +15,7 @@ class SMSPortal(Document):
     def validate_balance(self):
         pass
 
+    @frappe.whitelist()
     def request_sms(self):
         self.validate_balance()
         enqueue(

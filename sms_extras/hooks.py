@@ -16,18 +16,15 @@ app_license = "MIT"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = ["/assets/sms_extras/css/usage_info.css"]
-app_include_js = [
-    "/assets/js/sms_extras_templates.min.js",
-    "/assets/js/sms_extras.min.js",
-]
+# app_include_css = ["/assets/css/sms_extras.css"]
+app_include_js = ["/assets/js/sms_extras.min.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/sms_extras/css/sms_extras.css"
 # web_include_js = "/assets/sms_extras/js/sms_extras.js"
 
 # include js in page
-page_js = {"usage-info": "public/js/usage_info.js"}
+# page_js = {"page": "public/js/page.js"}
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
