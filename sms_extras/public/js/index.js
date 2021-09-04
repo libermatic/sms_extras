@@ -1,6 +1,6 @@
 import scripts from './scripts';
 
-const __version__ = '0.1.3';
+const __version__ = '13.0.0';
 
 frappe.provide('sms_extras');
 
