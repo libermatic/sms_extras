@@ -4,7 +4,9 @@
   "description": "Enhancements to ERPNext SMS module",
   "main": "sms_extras/public/js/index.js",
   "scripts": {
-    "version": "sed -i \"s/__version__.*/__version__ = \\\"$npm_package_version\\\"/\" $npm_package_name/__init__.py; git add -A $npm_package_name/__init__.py"
+    "version": "sed -i \"s/__version__.*/__version__ = \\\"$npm_package_version\\\"/\" $npm_package_name/__init__.py; sed -i \"s/__version__ = '.*';/__version__ = '$npm_package_version';/\" $npm_package_name/public/js/index.js; git add -A .",
+    "prerelease": "git log --pretty=\"%s\" $(git describe --abbrev=0 --tags $(git describe --abbrev=0)^)..$(git describe --abbrev=0)^ > /tmp/${npm_package_name}_release_notes",
+    "release": "gh release create v${npm_package_version} -F /tmp/${npm_package_name}_release_notes"
   },
   "repository": {
     "type": "git",
