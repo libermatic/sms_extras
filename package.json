@@ -24,6 +24,6 @@
   },
   "homepage": "https://github.com/libermatic/sms_extras#readme",
   "dependencies": {
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.23"
   }
 }
